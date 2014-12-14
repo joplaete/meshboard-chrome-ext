@@ -1,0 +1,47 @@
+/* app css stylesheet */
+
+/*html{
+  background-color: #16A085;
+}*/
+
+.menu {
+  list-style: none;
+  border-bottom: 0.1em solid black;
+  margin-bottom: 2em;
+  padding: 0 0 0.5em;
+}
+
+.menu:before {
+  content: "[";
+}
+
+.menu:after {
+  content: "]";
+}
+
+.menu > li {
+  display: inline;
+}
+
+.menu > li:before {
+  content: "|";
+  padding-right: 0.3em;
+}
+
+.menu > li:nth-child(1):before {
+  content: "";
+  padding: 0;
+}
+
+.circle {
+  padding: 0px;
+  line-height: 0;   /* remove line-height */ 
+  display: inline-block;  /* circle wraps image */
+  margin: 0px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-radius: 50%; /* relative value */
+  /*box-shadow: 0px 0px 5px rgba(0,0,0,0.4);*/
+  transition: linear 0.25s;
+  height: 36px;
+  width: 36px;
+}

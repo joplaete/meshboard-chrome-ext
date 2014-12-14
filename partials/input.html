@@ -1,0 +1,115 @@
+<br><span ng-show="error_has_occured" style="color:#FF0000">Whoops. There is a problem :( <br><br> In case you feel like being really helpfull... Please close the extension, right-click it, hit Inspect Popup (gotta be in chrome://extensions -> dev mode), and then paste the error logs you get in the console that shows up and mail it to jo.plaete@gmail.com. I OWE YOU A BEER NOW :)</span>
+
+<div class="container">
+
+<form class="form-horizontal" role="form" style="padding:30px">
+
+<!--   <div class="row">
+      <div class="form-group form-group-lg">
+        <label for="link" class="col-sm-2 control-label">Link</label>
+        <div class="col-sm-10">
+          <input type="text" class="form-control input-sm" id="link" placeholder="http://" ng-model="url" ng-blur="analyse()" ng-change="analyse()">
+        </div>
+      </div>
+  </div> -->
+
+  <div class="row" ng-hide="url_title_show">
+  <blockquote>
+    <i class="fa fa-circle-o-notch fa-spin"></i>
+  </blockquote>
+    <br><br><br>
+  </div>
+  <div class="row" ng-show="url_title_show">
+        <!-- <label for="inputTitle" class="col-sm-2 control-label">Title</label> -->
+        <!-- <div class="col-sm-10 pull-left"> -->
+          <!-- <input type="title" class="form-control input-sm" id="inputTitle" placeholder="" ng-model="url_title"> -->
+          <blockquote>
+            <p>{{url_title}}</p>
+            <footer>{{url_description}}</footer>
+          </blockquote>
+        <!-- </div> -->
+  </div> 
+
+  <div class="row">
+      <div class="form-group form-group-sm">
+        <label for="inputEmail" class="col-sm-2 control-label">My Email
+          <!-- <img class="circle" ng-src="http://www.gravatar.com/avatar/{{me_hashed}}"/> -->
+        </label>
+        <div class="col-sm-10 input-group margin-bottom-sm">
+          <span class="input-group-addon"><i class="fa fa-envelope-o fa-fw"></i></span>
+          <input type="email" class="form-control input-sm" id="inputEmail" placeholder="your@email.com" ng-model="me" ng-blur="suggest()" disabled>
+        </div>
+      </div>
+  </div>
+
+  <div class="row">
+      <div class="form-group form-group-sm">
+        <label for="shareWith" class="col-sm-2 control-label">Share with</label>
+         <div class="col-sm-10" ng-show="showRecent()">
+          <small>
+            Most Recent: 
+            <span ng-repeat="email in most_recent">
+              <a href="" ng-click="addRecent(email)">
+                <i class="fa fa-plus-square fa-fw"></i>{{email}}
+              </a>
+            </span>
+          </small>
+        </div>
+        <div class="col-sm-10" ng-show="showBest()">
+          <small>
+            Best friends: 
+            <span ng-repeat="email in best_friends">
+              <a href="" ng-click="addBest(email)">
+                <i class="fa fa-plus-square fa-fw"></i>{{email}}
+              </a>
+            </span>
+          </small>
+        </div>
+        <div class="col-sm-10 input-group margin-bottom-sm">
+          <span class="input-group-addon"><i class="fa fa-group fa-fw"></i></span>
+          <tags-input id="share_with_input" ng-model="share_with" add-on-space="true" add-on-comma="true" placeholder="Find friends" enableEditingLastTag="true" min-length="1" autofocus>
+             <auto-complete source="loadEmails($query)" max-results-to-show="5"></auto-complete>
+          </tags-input>
+        </div>
+      </div>
+  </div>
+
+  <div class="row">
+      <div class="form-group form-group-sm">
+        <label for="inputMessage" class="col-sm-2 control-label">Add Message</label>
+        <div class="col-sm-10 input-group margin-bottom-sm">
+          <span class="input-group-addon"><i class="fa fa-comment fa-fw"></i></span>
+          <input type="text" class="form-control" id="inputMessage" placeholder="Awesome link because..." ng-model="message" ng-keypress="message_field_keypress($event)">
+        </div>
+      </div>
+  </div>
+
+  <!-- <div class="row">
+      <div class="form-group">
+        <label for="inputTags" class="col-sm-2 control-label">Tags</label>
+        <div class="col-sm-10">
+          <tags-input ng-model="tags" id="inputTags" placeholder="Add Tag"></tags-input>
+        </div>
+      </div>
+  </div> -->
+
+
+  <div class="col-xs-4 pull-right">
+  <span ng-show="share_error" style="color:#FF0000">Oops.. Share Failed:( Please try again later.</span>
+    <a ng-click="save()" class="btn btn-block btn-lg btn-primary" ng-disabled="not_ready_to_share()">
+      <span ng-hide="share_in_progress">
+      Share <i class="fa fa-send fa-fw" ng-hide="not_ready_to_share()"></i>
+      </span>
+      <i ng-show="share_in_progress" class="fa fa-circle-o-notch fa-spin"></i>
+    </a>
+  </div>
+
+
+
+</form>
+
+
+
+</div> <!-- /container -->
+
+
