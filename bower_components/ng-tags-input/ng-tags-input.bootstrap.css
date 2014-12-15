@@ -22,7 +22,7 @@ tags-input .tags {
 tags-input .tags .tag-item {
   color: white;
   background: #428bca;
-  border: 1px solid #357ebd;
+  border: 0px solid #357ebd;
   border-radius: 4px;
 }
 tags-input .tags .tag-item.selected {
@@ -44,11 +44,11 @@ tags-input .autocomplete {
 }
 tags-input .autocomplete .suggestion-item.selected {
   color: #262626;
-  background-color: whitesmoke;
+  background-color: #e8e8e8;
 }
 tags-input .autocomplete .suggestion-item.selected em {
   color: #262626;
-  background-color: whitesmoke;
+  background-color: #e8e8e8;
 }
 tags-input .autocomplete .suggestion-item em {
   color: black;

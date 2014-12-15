@@ -1,6 +1,15 @@
-<br><span ng-show="error_has_occured" style="color:#FF0000">Whoops. There is a problem :( <br><br> In case you feel like being really helpfull... Please close the extension, right-click it, hit Inspect Popup (gotta be in chrome://extensions -> dev mode), and then paste the error logs you get in the console that shows up and mail it to jo.plaete@gmail.com. I OWE YOU A BEER NOW :)</span>
+<span ng-show="error_has_occured" style="color:#FF0000">Whoops. There is a problem :( <br><br> In case you feel like being really helpfull... Please close the extension, right-click it, hit Inspect Popup (gotta be in chrome://extensions -> dev mode), and then paste the error logs you get in the console that shows up and mail it to jo.plaete@gmail.com. I OWE YOU A BEER NOW :)</span>
 
-<div class="container">
+<span class="pull-left" style="color:#dfdede; margin:4px;">
+<strong>MESHBOARD</strong> ~ {{me_name}}
+</span>
+<!-- <span class="pull-left" style="color:#dfdede; margin:4px;">jo.plaete@gmail.com
+</span> -->
+<img ng-src="{{me_avatar}}" alt="{{me_name}}" class="circle pull-right">
+
+<br />
+
+<div class="container" ng-hide="share_complete_hide">
 
 <form class="form-horizontal" role="form" style="padding:30px">
 
@@ -11,6 +20,13 @@
           <input type="text" class="form-control input-sm" id="link" placeholder="http://" ng-model="url" ng-blur="analyse()" ng-change="analyse()">
         </div>
       </div>
+  </div> -->
+
+  <!-- <div class="row pull-right">
+  <h2>{{me_name}}
+    <img src="{{me_avatar}}" class="circle">
+  </h2>
+
   </div> -->
 
   <div class="row" ng-hide="url_title_show">
@@ -30,24 +46,23 @@
         <!-- </div> -->
   </div> 
 
-  <div class="row">
+  <!-- <div class="row">
       <div class="form-group form-group-sm">
         <label for="inputEmail" class="col-sm-2 control-label">My Email
-          <!-- <img class="circle" ng-src="http://www.gravatar.com/avatar/{{me_hashed}}"/> -->
         </label>
         <div class="col-sm-10 input-group margin-bottom-sm">
           <span class="input-group-addon"><i class="fa fa-envelope-o fa-fw"></i></span>
           <input type="email" class="form-control input-sm" id="inputEmail" placeholder="your@email.com" ng-model="me" ng-blur="suggest()" disabled>
         </div>
       </div>
-  </div>
+  </div> -->
 
   <div class="row">
       <div class="form-group form-group-sm">
         <label for="shareWith" class="col-sm-2 control-label">Share with</label>
          <div class="col-sm-10" ng-show="showRecent()">
           <small>
-            Most Recent: 
+            Recent: 
             <span ng-repeat="email in most_recent">
               <a href="" ng-click="addRecent(email)">
                 <i class="fa fa-plus-square fa-fw"></i>{{email}}
@@ -57,7 +72,7 @@
         </div>
         <div class="col-sm-10" ng-show="showBest()">
           <small>
-            Best friends: 
+            Friends: 
             <span ng-repeat="email in best_friends">
               <a href="" ng-click="addBest(email)">
                 <i class="fa fa-plus-square fa-fw"></i>{{email}}
@@ -67,8 +82,8 @@
         </div>
         <div class="col-sm-10 input-group margin-bottom-sm">
           <span class="input-group-addon"><i class="fa fa-group fa-fw"></i></span>
-          <tags-input id="share_with_input" ng-model="share_with" add-on-space="true" add-on-comma="true" placeholder="Find friends" enableEditingLastTag="true" min-length="1" autofocus>
-             <auto-complete source="loadEmails($query)" max-results-to-show="5"></auto-complete>
+          <tags-input id="share_with_input" ng-model="share_with" add-on-space="true" add-on-comma="true" placeholder="Find friends" enableEditingLastTag="true" min-length="1" enable-editing-last-tag="true" autofocus>
+             <auto-complete source="loadEmails($query)" max-results-to-show="8" min-length="1"></auto-complete>
           </tags-input>
         </div>
       </div>
@@ -98,18 +113,27 @@
   <span ng-show="share_error" style="color:#FF0000">Oops.. Share Failed:( Please try again later.</span>
     <a ng-click="save()" class="btn btn-block btn-lg btn-primary" ng-disabled="not_ready_to_share()">
       <span ng-hide="share_in_progress">
-      Share <i class="fa fa-send fa-fw" ng-hide="not_ready_to_share()"></i>
+      MESH <i class="fa fa-send fa-fw" ng-hide="not_ready_to_share()"></i>
       </span>
       <i ng-show="share_in_progress" class="fa fa-circle-o-notch fa-spin"></i>
     </a>
   </div>
 
 
-
 </form>
 
 
-
 </div> <!-- /container -->
+
+<div class="container" ng-show="share_complete_hide">
+  <br><br><br><br><br>
+  <center>
+    <!-- <h1 class="center">WOOHOO!</h1> -->
+    <img src="http://community.spartangames.co.uk/uploads/gallery/album_853/gallery_3406_853_429.jpeg">
+    <br>
+    <h2 class="center"><strong>SUCCESSFULLY MESHED</strong></h2>
+  </center>
+</div>
+
 
 

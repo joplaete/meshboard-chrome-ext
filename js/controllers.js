@@ -3,63 +3,86 @@
 /* Controllers */
 
 angular.module('myApp.controllers', []).
-controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter) {
+controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter, $timeout) {
 
   $scope.$storage = $localStorage.$default({
     my_email: "",
+    history: {}
   });
 
-  // $scope.server = "http://mesh-board.appspot.com/";
   // $scope.server = "http://localhost:8080/";
-  $scope.server = "http://mesh0-1-dot-mesh-board.appspot.com/";
-  // $scope.server = "http://mesh0-1-1-dot-mesh-board.appspot.com/";
+  $scope.server = "http://mesh0-2-dot-mesh-board.appspot.com/";
 
   $scope.error_has_occured = false; // for that message..
   $scope.share_error = false;
   $scope.url = "";
+  $scope.url_hash = "";
   $scope.url_title = "";
   $scope.url_description = "";
   $scope.url_title_show = false;
   $scope.me = $scope.$storage.my_email;
-  $scope.me_gravatar = "";
+  $scope.me_avatar = "";
+  $scope.me_name = "";
   $scope.best_friends = [];
   $scope.most_recent = [];
   $scope.share_with = [];
   $scope.share_in_progress = false;
+  $scope.share_complete_hide = false;
   $scope.tags = [
     // { text: 'cool' },
     // { text: 'tags' }
   ];
   $scope.message = "";
   $scope.token = "";
-  $scope.google_mails = [];
+  $scope.mails = [];
+  $scope.EMAIL_REGEXP = /^[a-z0-9!#$%&'*+/=?^_`{|}~.-]+@[a-z0-9-]+(\.[a-z0-9-]+)*$/i;
 
   // GET URL
   chrome.tabs.getSelected(null, function(tab) {
     $scope.url = tab.url;
     $scope.url_title = tab.title;
     $scope.url_title_show = false;
+    $scope.url_hash = CryptoJS.MD5($scope.url);
+
+    // restore session if exists
+    try{
+      if($scope.$storage.history[$scope.url_hash]){
+        $scope.share_with = JSON.parse(JSON.stringify($scope.$storage.history[$scope.url_hash].share_with));
+        $scope.message = $scope.$storage.history[$scope.url_hash].message;
+      }else{
+        $scope.$storage.history[$scope.url_hash] = {};
+        $scope.$storage.history[$scope.url_hash].share_with = [];
+        $scope.$storage.history[$scope.url_hash].message = "";
+      }
+    } catch (err) {
+      // if anything goes wrong with this structure, reset it
+      $scope.$storage.history = {};
+    };
+
+    // analyse link
     $scope.analyse();
+
   });
 
-  chrome.identity.getProfileUserInfo(function(data) {
-    console.log(data);
-    $scope.me = data.email;
-    $scope.me_hashed = CryptoJS.MD5($scope.me).toString();
-    var gravatar_profile_url = 'https://www.gravatar.com/'+$scope.me_hashed+'.json';
-    // $http.get(gravatar_profile_url).
-    //   success(function(data, status, headers, config) {
-    //     console.log("gravatar success");
-    //     console.log(data);
-    //   }).
-    //   error(function(data, status, headers, config) {
-    //     console.log("gravatar fail");
-    //   });
+  $scope.getProfileUserInfo = function(){
+    chrome.identity.getProfileUserInfo(function(data) {
+      $scope.me = data.email;
+      $scope.add_to_mails([$scope.me]);
 
-    $scope.suggest();
-  });
+      var userinfo_url = 'https://www.googleapis.com/oauth2/v1/userinfo?access_token='+$scope.token+'&alt=json';
+      $http.get(userinfo_url).
+      success(function(data, status, headers, config) {
+        $scope.me_avatar = data.picture;
+        $scope.me_name = data.name;
+      }).
+      error(function(data, status, headers, config) {
+        console.log("userinfo_url fail.");
+      });
 
-  // console.log(chrome.identity);
+      $scope.suggest();
+    });
+  };
+
   chrome.identity.getAuthToken({
     'interactive': true
   }, function(token) {
@@ -67,11 +90,11 @@ controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter) {
       console.log("chrome.runtime.lastError:");
       console.log(chrome.runtime.lastError);
     } else {
-      console.log('Token acquired:');
-      // console.log('Token acquired:' + token +
-        // '. See chrome://identity-internals for details.');
+      // store the token
       $scope.token = token;
-
+      // get profile
+      $scope.getProfileUserInfo();
+      // get contacts (shld be function)
       var contacts_url = 'https://www.google.com/m8/feeds/contacts/default/full/?access_token=' + $scope.token + '&alt=json&max-results=10000';
 
       $http.get(contacts_url).
@@ -79,11 +102,10 @@ controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter) {
         var arr = data.feed.entry[0].gd$email;
         for (var i = 0; i < data.feed.entry.length; i++) {
           var c = data.feed.entry[i];
-          // console.log(c.gd$email[0].address);
           var arr = data.feed.entry[i].gd$email;
-          // console.log(arr[0].address);
           try {
-            $scope.google_mails.push(arr[0].address);
+            // don't add duplis
+            $scope.add_to_mails([arr[0].address]);
           } catch (err) {};
         };
       }).
@@ -98,27 +120,38 @@ controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter) {
     }
   });
 
+  $scope.add_to_mails = function(mails){
+    // takes array, avoids adding duplis
+    for (var i = mails.length - 1; i >= 0; i--) {
+      var mail = mails[i];
+      if($scope.mails.indexOf(mail)==-1){
+        $scope.mails.push(mail);
+      }
+    };
+  }
+
   $scope.suggest = function() {
-    console.log("suggest");
     $http.get($scope.server + 'rest/suggest?me=' + $scope.me).
     success(function(data, status, headers, config) {
       $scope.most_recent = data.most_recent;
       $scope.best_friends = data.best_friends;
+
+      $scope.add_to_mails(data.emails);
+      $scope.add_to_mails(['mon@gool.me']);
+
     }).
     error(function(data, status, headers, config) {
       console.log("suggest fail.");
     });
   }
-  $scope.suggest();
 
   $scope.loadEmails = function(query) {
     var deferred = $q.defer();
-    deferred.resolve($filter('filter')($scope.google_mails, query));
+    deferred.resolve($filter('filter')($scope.mails, query));
     return deferred.promise;
   };
 
   $scope.email_changed = function() {
-    console.log("email changed");
     $scope.suggest();
     $scope.loadEmails();
   };
@@ -132,8 +165,10 @@ controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter) {
   $scope.addRecent = function(email) {
     var add = {};
     add.text = email;
-    $scope.share_with.push(add); 
-    $scope.most_recent.splice($scope.best_friends.indexOf(email), 1);
+    if(!$scope.email_in_share_with(email)){
+      $scope.share_with.push(add); 
+    };
+    $scope.most_recent.splice($scope.most_recent.indexOf(email), 1);
   };
   $scope.showBest = function() {
     if ($scope.best_friends.length > 0) {
@@ -142,17 +177,41 @@ controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter) {
     return false;
   }
   $scope.addBest = function(email) {
-    console.log("addBest");
-    console.log(email);
     var add = {};
     add.text = email;
-    $scope.share_with.push(add); 
+    if(!$scope.email_in_share_with(email)){
+      $scope.share_with.push(add); 
+    };
     $scope.best_friends.splice($scope.best_friends.indexOf(email), 1);
   };
 
+  $scope.email_in_share_with = function(email){
+    for (var i = $scope.share_with.length - 1; i >= 0; i--) {
+      var obj = $scope.share_with[i];
+      if(obj.text==email){
+        return true;
+      }
+    };
+    return false;
+  };
+
+  $scope.remove_invalid_in_share_with = function(email){
+    for (var i = $scope.share_with.length - 1; i >= 0; i--) {
+      var obj = $scope.share_with[i];
+      if(!$scope.valid_email(obj.text)){
+        $scope.share_with.splice($scope.share_with.indexOf(obj));
+      }
+    };
+  };
+
+  $scope.valid_email = function(email) { 
+    var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(email);
+  } 
+
   $scope.analyse = function() {
-    console.log("analyse");
-    console.log($scope.url);
+    // console.log("analyse");
+    // console.log($scope.url);
 
     var data = {};
     data.url = $scope.url;
@@ -162,7 +221,6 @@ controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter) {
       $scope.url_title = data.title;
       $scope.url_description = data.description;
       $scope.url_title_show = true;
-
     }).
     error(function(data, status, headers, config) {
       $scope.url_title_show = true;
@@ -171,6 +229,7 @@ controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter) {
   }
 
   $scope.message_field_keypress = function($event) {
+    $scope.$storage.history[$scope.url_hash].message = $scope.message;
     if ($event.charCode == 13) {
       $scope.save();
     }
@@ -185,8 +244,19 @@ controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter) {
   });
   $scope.$watch('share_with', function() {
     $scope.not_ready_to_share();
-  });
+    // remove invalid emails
+    $scope.remove_invalid_in_share_with();
+
+    // store this in history
+    if($scope.url_hash){
+      $scope.$storage.history[$scope.url_hash].share_with = $scope.share_with;
+    };
+
+  }, true);
   $scope.not_ready_to_share = function() {
+    if ($scope.share_in_progress){
+      return true;
+    }
     if ($scope.url == "") {
       return true;
     }
@@ -206,6 +276,8 @@ controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter) {
     data.title = $scope.url_title;
     data.description = $scope.url_description;
     data.me = $scope.me;
+    data.me_name = $scope.me_name;
+    data.me_avatar = $scope.me_avatar;
     $scope.$storage.my_email = $scope.me;
     data.share_with = $scope.share_with;
     data.message = $scope.message;
@@ -222,7 +294,15 @@ controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter) {
       $scope.url_title_show = false;
       $scope.message = "";
       $scope.share_in_progress = false;
-      window.close();
+
+      delete $scope.$storage.history[$scope.url_hash];
+
+      $scope.share_complete_hide = true;
+
+      $timeout(function(){
+        window.close();
+      }, 3000);
+
     }).
     error(function(data, status, headers, config) {
       console.log("save fail!");

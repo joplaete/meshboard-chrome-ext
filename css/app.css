@@ -34,7 +34,7 @@
 }
 
 .circle {
-  padding: 0px;
+  padding: 10px;
   line-height: 0;   /* remove line-height */ 
   display: inline-block;  /* circle wraps image */
   margin: 0px;
@@ -42,6 +42,6 @@
   border-radius: 50%; /* relative value */
   /*box-shadow: 0px 0px 5px rgba(0,0,0,0.4);*/
   transition: linear 0.25s;
-  height: 36px;
-  width: 36px;
+  height: 65px;
+  width: 65px;
 }
