@@ -45,3 +45,12 @@
   height: 65px;
   width: 65px;
 }
+
+.square {
+  padding: 10px;
+  line-height: 0;   /* remove line-height */ 
+  display: inline-block;  /* circle wraps image */
+  margin: 0px;
+  height: auto;
+  width: 100px;
+}

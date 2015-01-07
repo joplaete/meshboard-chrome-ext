@@ -11,7 +11,7 @@ controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter, $tim
   });
 
   // $scope.server = "http://localhost:8080/";
-  $scope.server = "http://mesh0-2-dot-mesh-board.appspot.com/";
+  $scope.server = "http://mesh0-3-dot-mesh-board.appspot.com/";
 
   $scope.error_has_occured = false; // for that message..
   $scope.share_error = false;
@@ -19,7 +19,10 @@ controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter, $tim
   $scope.url_hash = "";
   $scope.url_title = "";
   $scope.url_description = "";
+  $scope.url_image = "";
   $scope.url_title_show = false;
+  $scope.url_description_show = false;
+  $scope.url_image_show = false;
   $scope.me = $scope.$storage.my_email;
   $scope.me_avatar = "";
   $scope.me_name = "";
@@ -36,12 +39,33 @@ controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter, $tim
   $scope.token = "";
   $scope.mails = [];
   $scope.EMAIL_REGEXP = /^[a-z0-9!#$%&'*+/=?^_`{|}~.-]+@[a-z0-9-]+(\.[a-z0-9-]+)*$/i;
+  $scope.link_filter = "";
+  $scope.links = [];
+
+
+  // this listener gets the page parse info back
+  chrome.extension.onMessage.addListener(function(data, sender) {
+    if (data.action == "get_meta") {
+      // console.log("addListener called in ANG!!!!");
+      // console.log(sender);
+      console.log(data);
+      // console.log(" - - - - ");
+      if(data.description){
+        $scope.url_description = data.description;
+        $scope.url_description_show = true;
+      };
+      if(data['og:image']){
+        $scope.url_image = data['og:image'];
+        $scope.url_image_show = true;
+      };    
+    }
+  });
 
   // GET URL
   chrome.tabs.getSelected(null, function(tab) {
     $scope.url = tab.url;
     $scope.url_title = tab.title;
-    $scope.url_title_show = false;
+    $scope.url_title_show = true;
     $scope.url_hash = CryptoJS.MD5($scope.url);
 
     // restore session if exists
@@ -59,8 +83,14 @@ controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter, $tim
       $scope.$storage.history = {};
     };
 
-    // analyse link
-    $scope.analyse();
+    // analyse link ~ server analyse deprecated
+    // $scope.analyse();
+    // in favor of js parse locally
+    // this ignites the page parsing
+    chrome.tabs.executeScript({
+      // code: 'console.log($("meta"))'
+      file: 'js/content.js'
+    });
 
   });
 
@@ -80,6 +110,7 @@ controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter, $tim
       });
 
       $scope.suggest();
+      $scope.get_links();
     });
   };
 
@@ -228,8 +259,27 @@ controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter, $tim
 
   }
 
+  $scope.get_links = function(){
+    //http://localhost:8080/rest/link?me=jo.plaete@gmail.com&type=me
+    var links_url = $scope.server+'rest/link?me='+$scope.me+'&type=me';
+    $http.get(links_url).
+      success(function(data, status, headers, config) {
+        $scope.links = data.links;
+      }).
+      error(function(data, status, headers, config) {
+        console.log("links fail...");
+      });
+  };
+
+  $scope.open_link = function(link){
+    console.log(link);
+    chrome.tabs.create({ url: link.url });
+    window.close();
+  };
+
   $scope.message_field_keypress = function($event) {
-    $scope.$storage.history[$scope.url_hash].message = $scope.message;
+    $scope.message = $event.currentTarget.value;
+    $scope.$storage.history[$scope.url_hash].message = $event.currentTarget.value;
     if ($event.charCode == 13) {
       $scope.save();
     }
@@ -275,6 +325,7 @@ controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter, $tim
     data.url = $scope.url;
     data.title = $scope.url_title;
     data.description = $scope.url_description;
+    data.image = $scope.url_image;
     data.me = $scope.me;
     data.me_name = $scope.me_name;
     data.me_avatar = $scope.me_avatar;
@@ -286,6 +337,8 @@ controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter, $tim
     // set in progress to true
     $scope.share_error = false;
     $scope.share_in_progress = true;
+
+    console.log(data);
 
     $http.post($scope.server + 'rest/save', data).
     success(function(data, status, headers, config) {
