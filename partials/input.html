@@ -2,7 +2,7 @@
 
 
 
-<header class="panel-heading bg-primary lter no-borders">
+<header class="panel-heading bg-primary lter no-borders" ng-show="user_initialized">
   <div class="clearfix">
     <span class="pull-left thumb avatar border m-r">
       <img ng-src="{{me_avatar}}" class="img-circle">
@@ -20,7 +20,19 @@
 </header>
 
 
-<tabset type="tabs">
+<div ng-hide="user_initialized">
+  <br><br><br>
+  <center>
+    <i class="fa fa-circle-o-notch fa-spin fa-2x"></i>
+    <h3 ng-show="sign_in_please">
+      <a class="btn btn-primary btn-lg" ng-click="sign_in_to_chrome()">
+        Sign in to Google Chrome to continue!
+      </a>
+    </h3>
+  </center>
+</div>
+
+<tabset type="tabs" ng-show="user_initialized">
     <tab>
     <tab-heading>
         <i class="fa fa-send fa-fw"></i> MESH
@@ -156,7 +168,7 @@
   <a class="btn btn-primary btn-lg btn-block" ng-click="save()" ng-disabled="not_ready_to_share()">
     <i class="fa fa-send fa-fw pull-right" ng-hide="not_ready_to_share()"></i> 
     <i ng-show="share_in_progress" class="fa fa-circle-o-notch fa-spin pull-right"></i>
-    MESH
+    SEND
   </a>
 
 

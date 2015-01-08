@@ -11,7 +11,8 @@ controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter, $tim
   });
 
   // $scope.server = "http://localhost:8080/";
-  $scope.server = "http://mesh0-3-dot-mesh-board.appspot.com/";
+  // $scope.server = "http://mesh0-3-dot-mesh-board.appspot.com/";
+  $scope.server = "http://mesh0-4-dot-mesh-board.appspot.com/";
 
   $scope.error_has_occured = false; // for that message..
   $scope.share_error = false;
@@ -37,11 +38,20 @@ controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter, $tim
   ];
   $scope.message = "";
   $scope.token = "";
+  $scope.user_initialized = false;
+  $scope.sign_in_please = false;
   $scope.mails = [];
   $scope.EMAIL_REGEXP = /^[a-z0-9!#$%&'*+/=?^_`{|}~.-]+@[a-z0-9-]+(\.[a-z0-9-]+)*$/i;
   $scope.link_filter = "";
   $scope.links = [];
 
+  $timeout(function(){
+        $scope.sign_in_please = true;
+      }, 4000);
+  $scope.sign_in_to_chrome = function(){
+    chrome.tabs.create({ url: "chrome://chrome-signin/?source=0" });
+    window.close();
+  }
 
   // this listener gets the page parse info back
   chrome.extension.onMessage.addListener(function(data, sender) {
@@ -102,15 +112,46 @@ controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter, $tim
       var userinfo_url = 'https://www.googleapis.com/oauth2/v1/userinfo?access_token='+$scope.token+'&alt=json';
       $http.get(userinfo_url).
       success(function(data, status, headers, config) {
+        console.log(data);
         $scope.me_avatar = data.picture;
         $scope.me_name = data.name;
+        $scope.me_given_name = data.given_name;
+        $scope.me_family_name = data.family_name;
+        $scope.me_google_id = data.id;
+        $scope.me_google_link = data.link;
+        $scope.me_locale = data.locale;
+        $scope.me_gender = data.gender;
       }).
       error(function(data, status, headers, config) {
         console.log("userinfo_url fail.");
       });
 
+      // user ready, unlock ui
+      $scope.user_initialized = true;
+
       $scope.suggest();
       $scope.get_links();
+    });
+  };
+
+  $scope.updateUserInfo = function(){
+    var data = {};
+    data.token = $scope.token;
+    data.email = $scope.me;
+    data.avatar = $scope.me_avatar;
+    data.name = $scope.me_name;
+    data.given_name = $scope.me_given_name;
+    data.family_name = $scope.me_family_name;
+    data.locale = $scope.me_locale;
+    data.gender = $scope.me_gender;
+    // data.contacts = $scope.mails;
+
+    $http.post($scope.server + 'rest/user', data).
+    success(function(data, status, headers, config) {
+      console.log('!updateUserInfo success!');
+    }).
+    error(function(data, status, headers, config) {
+      console.log('updateUserInfo failed.');
     });
   };
 
@@ -118,6 +159,7 @@ controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter, $tim
     'interactive': true
   }, function(token) {
     if (chrome.runtime.lastError) {
+      console.log("getAuthToken Error");
       console.log("chrome.runtime.lastError:");
       console.log(chrome.runtime.lastError);
     } else {
@@ -139,6 +181,7 @@ controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter, $tim
             $scope.add_to_mails([arr[0].address]);
           } catch (err) {};
         };
+        $scope.updateUserInfo();
       }).
       error(function(data, status, headers, config) {
         console.log("contacts fail, revoking token...");
@@ -328,7 +371,10 @@ controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter, $tim
     data.image = $scope.url_image;
     data.me = $scope.me;
     data.me_name = $scope.me_name;
+    data.me_given_name = $scope.me_given_name;
+    data.me_family_name = $scope.me_family_name;
     data.me_avatar = $scope.me_avatar;
+    data.url_image = $scope.url_image;
     $scope.$storage.my_email = $scope.me;
     data.share_with = $scope.share_with;
     data.message = $scope.message;
