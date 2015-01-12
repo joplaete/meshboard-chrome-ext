@@ -11,7 +11,6 @@ controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter, $tim
   });
 
   // $scope.server = "http://localhost:8080/";
-  // $scope.server = "http://mesh0-3-dot-mesh-board.appspot.com/";
   $scope.server = "http://mesh0-4-dot-mesh-board.appspot.com/";
 
   $scope.error_has_occured = false; // for that message..
@@ -32,10 +31,7 @@ controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter, $tim
   $scope.share_with = [];
   $scope.share_in_progress = false;
   $scope.share_complete_hide = false;
-  $scope.tags = [
-    // { text: 'cool' },
-    // { text: 'tags' }
-  ];
+  $scope.tags = [/* { text: 'cool' }, */];
   $scope.message = "";
   $scope.token = "";
   $scope.user_initialized = false;
@@ -64,6 +60,7 @@ controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter, $tim
         $scope.url_description = data.description;
         $scope.url_description_show = true;
       };
+      // unreliable in SPA's.. but leaving it here for speed! gets overriden later by server based call
       if(data['og:image']){
         $scope.url_image = data['og:image'];
         $scope.url_image_show = true;
@@ -98,9 +95,21 @@ controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter, $tim
     // in favor of js parse locally
     // this ignites the page parsing
     chrome.tabs.executeScript({
-      // code: 'console.log($("meta"))'
       file: 'js/content.js'
     });
+
+    // use extra opengraph call for reliable image.. (rare race condition possible with executeScript content.js crawl but rather kick it of here to gain time)
+    var opengraph_crawl_url = "http://www.opengraph.io/api/1.0/site/"+encodeURIComponent($scope.url);
+    $http.get(opengraph_crawl_url).
+      success(function(data, status, headers, config) {
+        if(data.openGraph.image){
+          $scope.url_image = data.hybridGraph.image;
+          $scope.url_image_show = true;
+        }
+      }).
+      error(function(data, status, headers, config) {
+        console.log('opengraph crawl failed!');
+      }); 
 
   });
 
@@ -209,10 +218,7 @@ controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter, $tim
     success(function(data, status, headers, config) {
       $scope.most_recent = data.most_recent;
       $scope.best_friends = data.best_friends;
-
       $scope.add_to_mails(data.emails);
-      $scope.add_to_mails(['mon@gool.me']);
-
     }).
     error(function(data, status, headers, config) {
       console.log("suggest fail.");
@@ -303,7 +309,6 @@ controller('InputCtrl', function($scope, $http, $localStorage, $q, $filter, $tim
   }
 
   $scope.get_links = function(){
-    //http://localhost:8080/rest/link?me=jo.plaete@gmail.com&type=me
     var links_url = $scope.server+'rest/link?me='+$scope.me+'&type=me';
     $http.get(links_url).
       success(function(data, status, headers, config) {
